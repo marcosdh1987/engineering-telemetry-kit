@@ -104,5 +104,10 @@ def run_snapshot(cwd: Path, *, profile: str | None, trigger: str, force: bool) -
         if not result.ok:
             print(f"WARN telemetry not sent: {result.message}")
             continue
-        update_snapshot_fingerprint(repo_root, event.event_id or "", event.occurred_at.isoformat())
+        if event.event_type == EventType.BRANCH_SNAPSHOT:
+            update_snapshot_fingerprint(
+                repo_root,
+                event.event_id or "",
+                event.occurred_at.isoformat(),
+            )
     return 0

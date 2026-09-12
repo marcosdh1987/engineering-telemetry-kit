@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from engobs.ai.claude import install_claude_hooks
@@ -17,6 +18,12 @@ def run_install(cwd: Path, *, profile: str | None) -> int:
 
     config, repo_root = load_runtime_config(cwd, profile)
     if config.privacy_mode == PrivacyMode.STRICT and not config.privacy_salt:
+        if os.environ.get("ENGOBS_PRIVACY_MODE", "").lower() == PrivacyMode.STRICT.value:
+            print(
+                "ERROR strict mode selected from environment requires ENGOBS_PRIVACY_SALT "
+                "or a stored global privacy_salt"
+            )
+            return 1
         ensure_privacy_salt(default_global_config_path(), config.profile)
         config, repo_root = load_runtime_config(cwd, profile)
 

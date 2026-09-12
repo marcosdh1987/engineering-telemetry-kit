@@ -203,3 +203,78 @@ def test_failed_snapshot_does_not_advance_local_snapshot_state(
     assert main(["snapshot", "--force"]) == 0
     state = load_state(repo)
     assert "last_snapshot_fingerprint" not in state
+
+
+def test_snapshot_state_tracks_branch_snapshot_fingerprint_only(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _init_repo(repo)
+    monkeypatch.chdir(repo)
+    monkeypatch.setenv("ENGOBS_ENDPOINT", "https://gateway.example.com")
+
+    captured: list[dict[str, Any]] = []
+
+    def fake_send_event(config: Any, event: Any) -> DeliveryResult:
+        del config
+        captured.append(event.model_dump(mode="json", exclude_none=True))
+        return DeliveryResult(ok=True, status_code=202, message="ok")
+
+    monkeypatch.setattr("engobs.commands.snapshot.send_event", fake_send_event)
+
+    assert main(["snapshot", "--force"]) == 0
+    state = load_state(repo)
+    branch_event = next(
+        payload for payload in captured if payload["event_type"] == "branch_snapshot"
+    )
+    assert state["last_snapshot_fingerprint"] == branch_event["event_id"]
+
+
+def test_failed_ai_session_does_not_advance_local_state(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _init_repo(repo)
+    monkeypatch.chdir(repo)
+    monkeypatch.setenv("ENGOBS_ENDPOINT", "https://gateway.example.com")
+
+    def fake_send_event(config: Any, event: Any) -> DeliveryResult:
+        del config, event
+        return DeliveryResult(ok=False, status_code=503, message="unavailable")
+
+    monkeypatch.setattr("engobs.commands.ai_session.send_event", fake_send_event)
+
+    assert (
+        main(
+            [
+                "ai-session",
+                "start",
+                "--tool",
+                "claude",
+                "--session-id",
+                "session-123",
+            ]
+        )
+        == 0
+    )
+    state = load_state(repo)
+    assert state.get("ai_sessions") is None
+
+
+def test_verify_start_failure_does_not_advance_attempt_counter(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _init_repo(repo)
+    monkeypatch.chdir(repo)
+    monkeypatch.setenv("ENGOBS_ENDPOINT", "https://gateway.example.com")
+
+    assert main(["verify", "--", "/definitely/missing-command"]) == 127
+    state = load_state(repo)
+    assert "verification_attempt" not in state

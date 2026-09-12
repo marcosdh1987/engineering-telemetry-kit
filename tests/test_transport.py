@@ -69,3 +69,17 @@ def test_tls_disable_logs_warning(
     config = ResolvedConfig(endpoint="https://gateway.example.com", verify_tls=False)
     http_transport.check_health(config)
     assert "TLS verification disabled" in caplog.text
+
+
+def test_non_2xx_health_response_is_not_treated_as_healthy(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        http_transport.request,
+        "urlopen",
+        lambda *args, **kwargs: DummyResponse(302, {"redirect": True}),
+    )
+    config = ResolvedConfig(endpoint="https://gateway.example.com")
+    result = http_transport.check_health(config)
+    assert not result.ok
+    assert result.status_code == 302

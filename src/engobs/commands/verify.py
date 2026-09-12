@@ -33,6 +33,15 @@ def run_verify(cwd: Path, *, profile: str | None, command: list[str]) -> int:
     snapshot = get_snapshot(cwd)
     config, _ = load_runtime_config(cwd, profile)
     configure_logging(config.debug)
+    try:
+        process = subprocess.Popen(command, cwd=snapshot.repo_root)
+    except FileNotFoundError:
+        print(f"WARN verification command not found: {command[0]}")
+        return 127
+    except OSError as exc:
+        print(f"WARN verification command failed to start: {exc.__class__.__name__}")
+        return 126
+
     attempt = next_verification_attempt(snapshot.repo_root)
     base: dict[str, Any] = {
         "organization": config.organization or snapshot.organization,
@@ -54,14 +63,14 @@ def run_verify(cwd: Path, *, profile: str | None, command: list[str]) -> int:
     _emit(config, started_event)
 
     start = time.perf_counter()
-    completed = subprocess.run(command, cwd=snapshot.repo_root, check=False)
+    return_code = process.wait()
     duration = time.perf_counter() - start
     event_type = (
         EventType.VERIFICATION_PASSED
-        if completed.returncode == 0
+        if return_code == 0
         else EventType.VERIFICATION_FAILED
     )
-    status = "passed" if completed.returncode == 0 else "failed"
+    status = "passed" if return_code == 0 else "failed"
     finished_payload = dict(base)
     finished_payload.update(
         {
@@ -73,4 +82,4 @@ def run_verify(cwd: Path, *, profile: str | None, command: list[str]) -> int:
     )
     finished_event = TelemetryEvent.model_validate(finished_payload).finalized()
     _emit(config, finished_event)
-    return completed.returncode
+    return return_code

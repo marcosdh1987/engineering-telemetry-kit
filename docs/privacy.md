@@ -28,7 +28,7 @@ CLI args > ENV > repo config > global config > defaults
 
 ## Strict mode
 
-Strict mode requires a local privacy salt. `engobs install` auto-generates and stores one in the global config when strict mode is selected and no salt exists. `engobs doctor` reports missing strict-mode salt as `ERROR`.
+Strict mode requires a local privacy salt. `engobs install` auto-generates and stores one in the global config when strict mode is selected from file-backed configuration and no salt exists. If strict mode is selected purely from environment variables, set `ENGOBS_PRIVACY_SALT` explicitly. `engobs doctor` reports missing strict-mode salt as `ERROR`.
 
 ## Final privacy validation
 
@@ -37,4 +37,6 @@ Before sending any event, `engobs`:
 1. builds a typed Pydantic event model (`extra = "forbid"`)
 2. serializes the event
 3. recursively validates forbidden fields
-4. sends only if validation succeeds
+4. applies privacy transformation when strict mode is enabled
+5. validates the transformed event again
+6. sends only if validation succeeds

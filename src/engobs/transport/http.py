@@ -108,9 +108,10 @@ def check_health(config: ResolvedConfig) -> HealthResult:
         ) as response:
             raw_body = response.read().decode() or "{}"
             payload = json.loads(raw_body)
+            status_code = response.getcode()
             return HealthResult(
-                ok=True,
-                status_code=response.getcode(),
+                ok=200 <= status_code < 300,
+                status_code=status_code,
                 payload=payload,
                 message="ok",
             )
