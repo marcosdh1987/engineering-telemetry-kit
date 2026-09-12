@@ -69,11 +69,10 @@ def send_event(config: ResolvedConfig, event: TelemetryEvent) -> DeliveryResult:
         ) as response:
             status_code = response.getcode()
             LOGGER.debug(
-                "sent event type=%s endpoint=%s status=%s headers=%s",
+                "sent event type=%s endpoint=%s status=%s",
                 event.event_type,
                 target,
                 status_code,
-                _headers(config, redact=True),
             )
             return DeliveryResult(
                 ok=200 <= status_code < 300,

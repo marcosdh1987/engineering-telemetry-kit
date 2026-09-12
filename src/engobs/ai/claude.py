@@ -43,19 +43,20 @@ def install_claude_hooks(repo_root: Path) -> bool:
         event_hooks = hooks.setdefault(event_name, [])
         if not isinstance(event_hooks, list):
             continue
-        already_present = any(
-            isinstance(item, dict) and item.get("id") == hook_id for item in event_hooks
-        )
-        if already_present:
-            continue
-        event_hooks.append(
-            {
-                "id": hook_id,
-                "command": COMMANDS[event_name],
-                "managed_by": "engobs",
-            }
-        )
-        changed = True
+        managed_entry = {
+            "id": hook_id,
+            "command": COMMANDS[event_name],
+            "managed_by": "engobs",
+        }
+        for index, item in enumerate(event_hooks):
+            if isinstance(item, dict) and item.get("id") == hook_id:
+                if item != managed_entry:
+                    event_hooks[index] = managed_entry
+                    changed = True
+                break
+        else:
+            event_hooks.append(managed_entry)
+            changed = True
     if changed or not existed:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n")

@@ -49,5 +49,6 @@ def run_ai_session(
     result = send_event(config, event)
     if not result.ok:
         print(f"WARN telemetry not sent: {result.message}")
+        return 0
     set_ai_session_state(repo_root, tool, session_id, action == "start")
     return 0

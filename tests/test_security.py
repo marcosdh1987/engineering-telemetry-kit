@@ -9,6 +9,7 @@ from typing import Any
 import pytest
 
 from engobs.cli import main
+from engobs.state.store import load_state
 from engobs.transport.http import DeliveryResult
 
 REMOTE_URL = "git@github.com:marcosdh1987/engineering-telemetry-kit.git"
@@ -181,3 +182,24 @@ def test_force_snapshot_bypasses_heartbeat_suppression(
         "branch_snapshot",
         "activity_observed",
     }
+
+
+def test_failed_snapshot_does_not_advance_local_snapshot_state(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _init_repo(repo)
+    monkeypatch.chdir(repo)
+    monkeypatch.setenv("ENGOBS_ENDPOINT", "https://gateway.example.com")
+
+    def fake_send_event(config: Any, event: Any) -> DeliveryResult:
+        del config, event
+        return DeliveryResult(ok=False, status_code=503, message="unavailable")
+
+    monkeypatch.setattr("engobs.commands.snapshot.send_event", fake_send_event)
+
+    assert main(["snapshot", "--force"]) == 0
+    state = load_state(repo)
+    assert "last_snapshot_fingerprint" not in state

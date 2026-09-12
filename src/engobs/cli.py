@@ -27,8 +27,7 @@ def build_parser() -> argparse.ArgumentParser:
     verify_parser = subparsers.add_parser("verify")
     verify_parser.add_argument("verify_command", nargs=argparse.REMAINDER)
 
-    uninstall_parser = subparsers.add_parser("uninstall")
-    uninstall_parser.add_argument("--keep-config", action="store_true")
+    subparsers.add_parser("uninstall")
 
     ai_parser = subparsers.add_parser("ai-session")
     ai_subparsers = ai_parser.add_subparsers(dest="ai_command", required=True)
