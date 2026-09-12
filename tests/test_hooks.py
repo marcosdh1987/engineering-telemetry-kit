@@ -3,7 +3,7 @@ import subprocess
 from pathlib import Path
 
 from engobs.ai.claude import claude_hooks_installed, install_claude_hooks, uninstall_claude_hooks
-from engobs.git.hooks import install_hook, uninstall_hook
+from engobs.git.hooks import install_hook, managed_block, uninstall_hook
 
 
 def _git(repo: Path, *args: str) -> None:
@@ -35,6 +35,23 @@ def test_hook_install_is_idempotent_and_preserves_existing_content(tmp_path: Pat
 
     uninstall_hook(repo, "post-commit")
     assert hook.read_text() == "#!/bin/sh\necho existing\n"
+
+
+def test_hook_install_replaces_outdated_managed_block(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _init_repo(repo)
+    hook = repo / ".git" / "hooks" / "post-commit"
+    hook.write_text(
+        "#!/bin/sh\n"
+        "# >>> engobs managed block >>>\n"
+        "legacy\n"
+        "# <<< engobs managed block <<<\n"
+    )
+
+    install_hook(repo, "post-commit", "commit")
+
+    assert hook.read_text() == f"#!/bin/sh\n{managed_block('commit')}\n"
 
 
 def test_claude_settings_are_preserved_and_uninstall_only_removes_managed_entries(

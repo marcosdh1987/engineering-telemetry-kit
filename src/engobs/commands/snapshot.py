@@ -64,7 +64,7 @@ def run_snapshot(cwd: Path, *, profile: str | None, trigger: str, force: bool) -
     heartbeat_key = f"{snapshot.repository or 'repo'}:{snapshot.branch}:activity"
     has_in_progress_work = (snapshot.dirty_files_count + snapshot.untracked_files_count) > 0
     if force or has_in_progress_work:
-        should_send_activity = should_emit_heartbeat(
+        should_send_activity = force or should_emit_heartbeat(
             repo_root,
             heartbeat_key,
             int(occurred_at.timestamp()),

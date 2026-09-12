@@ -84,8 +84,16 @@ def send_event(config: ResolvedConfig, event: TelemetryEvent) -> DeliveryResult:
         LOGGER.warning("telemetry http error event=%s status=%s", event.event_type, exc.code)
         return DeliveryResult(ok=False, status_code=exc.code, message=exc.reason)
     except Exception as exc:  # noqa: BLE001
-        LOGGER.warning("telemetry delivery failed event=%s reason=%s", event.event_type, exc)
-        return DeliveryResult(ok=False, status_code=None, message=str(exc))
+        LOGGER.warning(
+            "telemetry delivery failed event=%s error_type=%s",
+            event.event_type,
+            exc.__class__.__name__,
+        )
+        return DeliveryResult(
+            ok=False,
+            status_code=None,
+            message=f"delivery failed ({exc.__class__.__name__})",
+        )
 
 
 def check_health(config: ResolvedConfig) -> HealthResult:

@@ -104,10 +104,10 @@ def load_config(
 
     selected_profile = (
         profile_override
+        or cli_overrides.get("profile")
         or env_config.get("profile")
         or repo_config.profile
         or global_config.profile
-        or cli_overrides.get("profile")
     )
 
     merged: dict[str, Any] = {}

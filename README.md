@@ -80,9 +80,9 @@ Repository
 
 ## Documentation
 
-- `/home/runner/work/engineering-telemetry-kit/engineering-telemetry-kit/docs/privacy.md`
-- `/home/runner/work/engineering-telemetry-kit/engineering-telemetry-kit/docs/enterprise-deployment.md`
-- `/home/runner/work/engineering-telemetry-kit/engineering-telemetry-kit/docs/agent-integration.md`
-- `/home/runner/work/engineering-telemetry-kit/engineering-telemetry-kit/docs/integrations/ai-gateway.md`
-- `/home/runner/work/engineering-telemetry-kit/engineering-telemetry-kit/docs/integrations/claude-code.md`
-- `/home/runner/work/engineering-telemetry-kit/engineering-telemetry-kit/docs/integrations/git-hooks.md`
+- `docs/privacy.md`
+- `docs/enterprise-deployment.md`
+- `docs/agent-integration.md`
+- `docs/integrations/ai-gateway.md`
+- `docs/integrations/claude-code.md`
+- `docs/integrations/git-hooks.md`

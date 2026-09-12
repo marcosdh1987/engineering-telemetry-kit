@@ -46,6 +46,11 @@ def install_hook(repo_root: Path, hook_name: str, trigger: str) -> None:
 
     content = path.read_text()
     if START_MARKER in content:
+        start = content.index(START_MARKER)
+        end = content.index(END_MARKER) + len(END_MARKER)
+        updated = content[:start].rstrip() + "\n" + block + content[end:]
+        path.write_text(updated.rstrip() + "\n")
+        os.chmod(path, 0o755)
         return
     separator = "\n" if content.endswith("\n") else "\n\n"
     path.write_text(content + separator + block + "\n")

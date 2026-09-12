@@ -16,7 +16,7 @@ Select them with `ENGOBS_PROFILE=company` or `engobs --profile company doctor`.
 
 ## Repository override
 
-Per-repo overrides live in `/home/runner/work/engineering-telemetry-kit/engineering-telemetry-kit/.engobs.toml` when installed into a target repository, for example:
+Per-repo overrides live in `.engobs.toml` at the root of a target repository, for example:
 
 ```toml
 profile = "company"

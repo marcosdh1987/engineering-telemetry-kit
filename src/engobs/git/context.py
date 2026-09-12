@@ -69,7 +69,7 @@ def infer_identity_from_remote(remote_url: str) -> tuple[str | None, str | None]
         parts = [part for part in parsed.path.removesuffix(".git").split("/") if part]
     if len(parts) < 2:
         return None, None
-    return parts[-2], parts[-1]
+    return "/".join(parts[:-1]), parts[-1]
 
 
 def _existing_refs(repo_root: Path, refs: Iterable[str]) -> str | None:

@@ -19,6 +19,10 @@ def test_infer_identity_from_remote() -> None:
         "marcosdh1987",
         "bot-trello-v1",
     )
+    assert infer_identity_from_remote("git@gitlab.com:group/subgroup/project.git") == (
+        "group/subgroup",
+        "project",
+    )
 
 
 def test_git_snapshot_aggregates_without_paths(tmp_path: Path) -> None:

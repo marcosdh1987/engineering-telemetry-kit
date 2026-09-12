@@ -154,3 +154,30 @@ def test_debug_logging_redacts_api_key(
 
     assert result.ok
     assert "topsecret" not in caplog.text
+
+
+def test_force_snapshot_bypasses_heartbeat_suppression(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _init_repo(repo)
+    monkeypatch.chdir(repo)
+    monkeypatch.setenv("ENGOBS_ENDPOINT", "https://gateway.example.com")
+
+    captured: list[dict[str, Any]] = []
+
+    def fake_send_event(config: Any, event: Any) -> DeliveryResult:
+        del config
+        captured.append(event.model_dump(mode="json", exclude_none=True))
+        return DeliveryResult(ok=True, status_code=202, message="ok")
+
+    monkeypatch.setattr("engobs.commands.snapshot.send_event", fake_send_event)
+    monkeypatch.setattr("engobs.commands.snapshot.should_emit_heartbeat", lambda *args: False)
+
+    assert main(["snapshot", "--force"]) == 0
+    assert {payload["event_type"] for payload in captured} == {
+        "branch_snapshot",
+        "activity_observed",
+    }
