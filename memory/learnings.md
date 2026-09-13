@@ -2,6 +2,41 @@
 
 Append new entries at the top. One fact per entry; see `README.md` for the format.
 
+## engobs' flat event was never the collector's schema v4 — 2026-09-12
+
+The Cloudflare 403 masked a second failure: with the client identity fixed, every POST got
+`422 invalid_payload`. The collector (`ai-gateway` `engineering/contract.py`) expects an
+envelope + typed `attributes`, UUID5 `work_unit_id` in namespace
+`5f7c2a2e-6c1a-4b58-9f2e-3a9d4b2c1e01`, a separate `AiObservation` family, and stores
+`event_id` as a Postgres UUID (a SHA-256 hex `event_id` yields `503 storage_error`, not 422).
+
+**Why it matters:** "schema v4" in both repos meant different shapes; `/health` and a 422 on
+`POST {}` do not prove the real payload is accepted.
+**How to apply:** the wire shape lives only in `src/engobs/domain/wire.py` (ADR-0005), mirrored
+in `tests/test_wire.py`. When the collector contract changes, update both. Validate end to end
+with `ENGOBS_DEBUG=true engobs snapshot --trigger manual --force` and expect `status=202`.
+
+## `uv tool install --force .` can reuse a stale cached wheel — 2026-09-12
+
+Reinstalling from the local checkout with the same version number reused a cached 0.1.1 wheel
+that predated new modules, so the CLI kept the old behavior while tests were green.
+
+**Why it matters:** "reinstalled and still broken" was a cache artifact, not a code bug.
+**How to apply:** for local validation use
+`uv tool install --force --reinstall --no-cache .`; confirm with
+`ls ~/.local/share/uv/tools/engineering-telemetry-kit/lib/python*/site-packages/engobs/`.
+
+## Claude Code hooks: session id arrives on stdin, entries need `hooks[]` — 2026-09-12
+
+Claude Code delivers `{"session_id", "hook_event_name", "cwd", ...}` as JSON on the hook's
+stdin; there is no `CLAUDE_SESSION_ID` environment variable. Each `hooks.<Event>` item must be
+`{"matcher"?, "hooks": [{"type": "command", "command": ...}]}`; the `{"id", "command",
+"managed_by"}` entries engobs < 0.1.1 wrote were silently ignored.
+
+**Why it matters:** AI sessions never reached the backend on instrumented repos.
+**How to apply:** `engobs ai-session` reads the session id from stdin when `--session-id` is
+omitted; `engobs install` migrates legacy entries. Restart Claude Code after installing.
+
 ## Cloudflare error 1010 rejects urllib's default User-Agent — 2026-09-12
 
 Pointing `engobs doctor`/`snapshot` at a gateway behind Cloudflare returned `403 Forbidden`

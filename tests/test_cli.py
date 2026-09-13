@@ -1,5 +1,6 @@
 import subprocess
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -41,3 +42,33 @@ def test_install_and_uninstall_manage_hooks(
     assert (repo / ".git" / "hooks" / "post-commit").exists()
 
     assert main(["uninstall"]) == 0
+
+
+def test_ai_session_reads_session_id_from_hook_stdin(
+    git_repo: Path,
+    isolated_config: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import io
+    import sys
+
+    from engobs.privacy.pseudonymize import opaque_session_id
+    from engobs.transport.http import DeliveryResult
+
+    sent: list[Any] = []
+
+    def fake_send_event(config: Any, event: Any) -> DeliveryResult:
+        sent.append(event)
+        return DeliveryResult(ok=True, status_code=202, message="ok")
+
+    monkeypatch.chdir(git_repo)
+    monkeypatch.setenv("ENGOBS_ENDPOINT", "https://gateway.example.com")
+    monkeypatch.setattr("engobs.commands.ai_session.send_event", fake_send_event)
+    monkeypatch.setattr(sys, "stdin", io.StringIO('{"session_id": "abc123", "cwd": "/x"}'))
+
+    assert main(["ai-session", "start", "--tool", "claude"]) == 0
+
+    (event,) = sent
+    assert event.ai_tool == "claude"
+    assert event.opaque_session_id == opaque_session_id("abc123")
+    assert "abc123" not in event.model_dump_json()

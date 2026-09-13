@@ -149,7 +149,13 @@ def test_debug_logging_redacts_api_key(
     )
     caplog.set_level(logging.DEBUG)
     config = ResolvedConfig(endpoint="https://gateway.example.com", api_key="topsecret")
-    event = TelemetryEvent(event_type=EventType.BRANCH_SNAPSHOT, repository="repo").finalized()
+    event = TelemetryEvent(
+        event_type=EventType.BRANCH_SNAPSHOT,
+        organization="org",
+        project="proj",
+        repository="repo",
+        branch="main",
+    ).finalized()
 
     result = http_transport.send_event(config, event)
 

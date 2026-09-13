@@ -22,7 +22,9 @@ Never weaken these. If a task seems to require it, stop and explain before editi
   URLs, environment dumps, secrets. `src/engobs/privacy/validation.py` (`FORBIDDEN_KEYS`) is the
   executable list; every outbound event passes `validate_no_forbidden_fields` twice.
 - **Closed schema**: `TelemetryEvent` keeps `extra="forbid"`. A new field needs an ADR and a
-  `FORBIDDEN_KEYS` review; bumping `SCHEMA_VERSION` is a backend-coordinated decision.
+  `FORBIDDEN_KEYS` review; bumping `SCHEMA_VERSION` is a backend-coordinated decision. The
+  wire shape is owned by the collector (`ai-gateway`); change `domain/wire.py` and
+  `tests/test_wire.py` together.
 - **Strict mode**: `STRICT_FIELDS` are pseudonymized with a local `privacy_salt` that is never
   transmitted, logged, or written into the repository.
 - **Secrets**: `api_key` and `privacy_salt` never appear in logs, test output, `.engobs.toml`,
@@ -41,7 +43,8 @@ Never weaken these. If a task seems to require it, stop and explain before editi
 - `src/engobs/cli.py` — argparse entry point (`engobs`), dispatches to `commands/`.
 - `src/engobs/commands/` — `install`, `uninstall`, `doctor`, `snapshot`, `verify`, `ai_session`.
 - `src/engobs/config/` — `models.py` (pydantic, `extra="forbid"`), `loader.py` (precedence, env map).
-- `src/engobs/domain/` — `events.py` (`TelemetryEvent`, `EventType`), `fingerprint.py`.
+- `src/engobs/domain/` — `events.py` (flat `TelemetryEvent`), `wire.py` (collector schema v4
+  envelope + `attributes`, UUID5 work units; ADR-0005), `fingerprint.py`.
 - `src/engobs/privacy/` — forbidden-field validation, strict-mode pseudonymization.
 - `src/engobs/transport/http.py` — urllib POST/GET, `send_event`, `check_health`.
 - `src/engobs/git/` — snapshot aggregates (`context.py`), managed hook blocks (`hooks.py`).

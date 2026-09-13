@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "engineering-telemetry-kit"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Privacy-first Engineering Delivery telemetry kit"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -25,6 +25,9 @@ dev = [
 
 [project.scripts]
 engobs = "engobs.cli:main"
+
+[tool.hatch.version]
+path = "src/engobs/__init__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/engobs"]

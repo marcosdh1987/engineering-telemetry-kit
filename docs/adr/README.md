@@ -31,3 +31,4 @@ commit messages are for.
 - [0002 — Privacy-first closed telemetry schema](0002-privacy-first-closed-telemetry-schema.md)
 - [0003 — Standard-library-only, non-blocking HTTP transport](0003-stdlib-only-non-blocking-transport.md)
 - [0004 — Adopt a Harness Lite for agent-assisted development](0004-adopt-harness-lite.md)
+- [0005 — Emit the collector's schema v4 wire contract through a wire adapter](0005-emit-collector-wire-contract.md)

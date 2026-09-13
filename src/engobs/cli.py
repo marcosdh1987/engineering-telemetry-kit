@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from collections.abc import Sequence
 from pathlib import Path
 
+from engobs.ai.claude import read_hook_session_id
 from engobs.commands.ai_session import run_ai_session
 from engobs.commands.doctor import run_doctor
 from engobs.commands.install import run_install
@@ -34,7 +36,7 @@ def build_parser() -> argparse.ArgumentParser:
     for action in ("start", "end"):
         action_parser = ai_subparsers.add_parser(action)
         action_parser.add_argument("--tool", required=True)
-        action_parser.add_argument("--session-id", required=True)
+        action_parser.add_argument("--session-id", help="defaults to the hook stdin JSON")
         action_parser.add_argument("--model")
     return parser
 
@@ -63,7 +65,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             profile=args.profile,
             action=args.ai_command,
             tool=args.tool,
-            session_id=args.session_id,
+            session_id=args.session_id or read_hook_session_id(sys.stdin) or "unknown",
             model=args.model,
         )
     parser.error(f"Unsupported command: {args.command}")

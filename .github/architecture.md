@@ -22,6 +22,8 @@ Git hooks (post-commit, post-checkout)   Claude hooks (SessionStart/Stop/Session
                                                        v
                           privacy/validation.py                              (forbidden-field validation #2)
                                                        v
+                          domain/wire.py  ->  collector schema v4 (envelope + attributes)   (validation #3)
+                                                       v
                           transport/http.py  ->  POST /events | /ai-observations, GET /health
                                                        v
                                         Engineering Gateway (any backend, configurable endpoint)
@@ -46,7 +48,7 @@ can be bypassed by the next command; a transport that reads Git state cannot be 
 | Change | Touch | Also |
 | --- | --- | --- |
 | New CLI command | `cli.py` (parser + dispatch), `commands/<name>.py` | `tests/test_cli.py`, `README.md` core commands, `docs/` |
-| New event field | `domain/events.py` | ADR; review `privacy/validation.py` `FORBIDDEN_KEYS` and `privacy/policy.py` `STRICT_FIELDS`; coordinate `SCHEMA_VERSION` with the backend; `docs/privacy.md` table |
+| New event field | `domain/events.py` + `domain/wire.py` (and the collector contract) | ADR; review `privacy/validation.py` `FORBIDDEN_KEYS` and `privacy/policy.py` `STRICT_FIELDS`; coordinate `SCHEMA_VERSION` with the backend; `docs/privacy.md` table |
 | New config key | `config/models.py` (both `ProfileConfig` and `ResolvedConfig`), `config/loader.py` `ENV_MAP` | `tests/test_config.py`, `docs/enterprise-deployment.md` |
 | New HTTP endpoint or header | `transport/http.py` (single header builder) | `tests/test_transport.py` header assertions; never log secrets |
 | New managed hook (Git or AI tool) | `git/hooks.py` or `ai/claude.py` | idempotent install, exact-block uninstall, `tests/test_hooks.py` |

@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import secrets
 from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -75,6 +76,24 @@ def _profile_overlay(model: FileConfig, profile_name: str | None) -> dict[str, A
     return profile.model_dump(exclude_none=True)
 
 
+def _select_profile(
+    global_config: FileConfig,
+    repo_config: FileConfig,
+    env_config: dict[str, Any],
+    *,
+    profile_override: str | None,
+    cli_overrides: dict[str, Any],
+) -> str | None:
+    selected: str | None = (
+        profile_override
+        or cli_overrides.get("profile")
+        or env_config.get("profile")
+        or repo_config.profile
+        or global_config.profile
+    )
+    return selected
+
+
 def env_overrides() -> dict[str, Any]:
     resolved: dict[str, Any] = {}
     for env_name, (field_name, parser) in ENV_MAP.items():
@@ -102,12 +121,12 @@ def load_config(
     repo_config = load_toml_file(repo_config_path(repo_root))
     env_config = env_overrides()
 
-    selected_profile = (
-        profile_override
-        or cli_overrides.get("profile")
-        or env_config.get("profile")
-        or repo_config.profile
-        or global_config.profile
+    selected_profile = _select_profile(
+        global_config,
+        repo_config,
+        env_config,
+        profile_override=profile_override,
+        cli_overrides=cli_overrides,
     )
 
     merged: dict[str, Any] = {}
@@ -120,6 +139,55 @@ def load_config(
     merged.update(_compact(cli_overrides))
     merged["profile"] = selected_profile
     return ResolvedConfig.model_validate(merged)
+
+
+@dataclass(frozen=True)
+class ConfigSources:
+    """Where the resolved configuration came from (names only, never values)."""
+
+    global_path: Path
+    global_exists: bool
+    repo_path: Path
+    repo_exists: bool
+    profile: str | None
+    profile_in_global: bool
+    profile_in_repo: bool
+    env_vars: tuple[str, ...]
+
+    @property
+    def any_file(self) -> bool:
+        return self.global_exists or self.repo_exists
+
+
+def describe_config_sources(
+    repo_root: Path,
+    *,
+    profile_override: str | None = None,
+    global_config_path: Path | None = None,
+) -> ConfigSources:
+    """Report configuration provenance for diagnostics without re-resolving values."""
+    global_path = global_config_path or default_global_config_path()
+    repo_path = repo_config_path(repo_root)
+    global_config = load_toml_file(global_path)
+    repo_config = load_toml_file(repo_path)
+    env_config = env_overrides()
+    profile = _select_profile(
+        global_config,
+        repo_config,
+        env_config,
+        profile_override=profile_override,
+        cli_overrides={},
+    )
+    return ConfigSources(
+        global_path=global_path,
+        global_exists=global_path.exists(),
+        repo_path=repo_path,
+        repo_exists=repo_path.exists(),
+        profile=profile,
+        profile_in_global=bool(profile and profile in global_config.profiles),
+        profile_in_repo=bool(profile and profile in repo_config.profiles),
+        env_vars=tuple(name for name in ENV_MAP if os.environ.get(name)),
+    )
 
 
 def redact_config(config: ResolvedConfig) -> dict[str, Any]:

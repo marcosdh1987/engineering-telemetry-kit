@@ -1,89 +1,59 @@
 # engineering-telemetry-kit
 
-`engineering-telemetry-kit` provides the `engobs` CLI: a lightweight, portable, privacy-first emitter for Engineering Delivery telemetry.
+`engineering-telemetry-kit` provides the `engobs` CLI: a lightweight, portable, privacy-first
+emitter of Engineering Delivery telemetry (schema v4) for any Git repository.
 
-## What it does
-
-- installs safe Git hooks in any Git repository
+- installs safe, non-blocking Git hooks and Claude Code hooks
 - captures aggregate Git, verification, and AI-session metadata
-- emits schema v4 telemetry to a configurable Engineering Gateway
-- supports reusable global config, per-repo overrides, and multi-profile usage
-
-## What it does **not** collect
-
-- source code, diffs, patches, filenames, or file paths
-- prompts, completions, chat transcripts, or terminal output
-- developer identity such as name, email, username, or employee ID
-- secrets, API keys, passwords, remote URLs, or environment dumps
+- sends it to a configurable Engineering Gateway, also behind Cloudflare / reverse proxies
+- never collects source code, diffs, filenames, paths, prompts, completions, developer
+  identity, secrets, remote URLs, or terminal output
 
 ## Quickstart
 
-### Personal
-
 ```bash
-uv tool install engineering-telemetry-kit
-export ENGOBS_ENDPOINT=http://192.168.x.x:8090
-export ENGOBS_API_KEY=your-key
+uv tool install engineering-telemetry-kit          # or: uv tool install git+ssh://git@github.com/<org>/engineering-telemetry-kit.git
 cd my-repo
+cat > .engobs.toml <<'TOML'
+endpoint = "https://telemetry.example.com"
+organization = "example-org"
+project = "my-project"
+TOML
 engobs install
 engobs doctor
+engobs snapshot --trigger manual
 ```
 
-### Company
-
-```bash
-export ENGOBS_PROFILE=company
-engobs install
-engobs doctor
-```
-
-Example global config:
-
-```toml
-[profiles.company]
-endpoint = "https://engineering.company.internal"
-privacy_mode = "strict"
-verify_tls = true
-ca_bundle = "/etc/company/ca.pem"
-```
+Full walkthrough, expected `doctor` output, authentication and LiteLLM correlation:
+**[docs/onboarding.md](docs/onboarding.md)**.
 
 ## Core commands
 
 ```bash
-engobs install
-engobs doctor
-engobs snapshot --trigger manual
-engobs verify -- pytest
-engobs ai-session start --tool claude --session-id opaque-id
+engobs install                      # Git + Claude Code hooks (idempotent)
+engobs doctor                       # configuration, hooks, endpoint, auth, schema (with HINTs)
+engobs snapshot --trigger manual    # send a branch snapshot now
+engobs verify -- pytest             # wrap a check and report its outcome
+engobs ai-session start --tool claude   # session id from hook stdin, or --session-id
 engobs uninstall
 ```
 
 ## Privacy modes
 
-- `standard`: sends explicit repository and branch identity, never content or personal identity.
-- `strict`: pseudonymizes repository, branch, project, organization, and commit identifiers with a local salt that is never transmitted.
-
-## Architecture
-
-```text
-Repository
-   +-> Git hooks
-   +-> Claude hooks
-   +-> engobs verify
-          |
-          v
-       engobs CLI
-          |
-          v
-  Configurable Engineering Gateway
-```
+- `standard`: explicit repository/branch/commit identity and aggregate counts; never content
+  or personal identity.
+- `strict`: additionally pseudonymizes repository, branch, project, organization, commit and
+  session identifiers with a local salt that is never transmitted.
 
 ## Documentation
 
-- `docs/development.md` — contributing, quality gate, and the agent harness (`AGENTS.md`)
-- `docs/privacy.md`
-- `docs/enterprise-deployment.md`
-- `docs/agent-integration.md`
-- `docs/integrations/ai-gateway.md`
-- `docs/integrations/claude-code.md`
-- `docs/integrations/git-hooks.md`
+- [Onboarding](docs/onboarding.md) — instrument an existing repository (the validated flow)
+- [Troubleshooting](docs/troubleshooting.md) — 403 behind Cloudflare, 422 on empty POST, reverse proxy setup, auth
+- [Privacy model](docs/privacy.md)
+- [Enterprise deployment](docs/enterprise-deployment.md) — repo-level vs global profiles, TLS, rollout
+- [AI Gateway integration](docs/integrations/ai-gateway.md) · [Claude Code](docs/integrations/claude-code.md) · [Git hooks](docs/integrations/git-hooks.md)
+- [Development guide](docs/development.md) — quality gate and the agent harness (`AGENTS.md`)
+- [Changelog](CHANGELOG.md)
+
+Backend operation (collector, storage, dashboards, LiteLLM, auth) lives in the `ai-gateway`
+repository.
