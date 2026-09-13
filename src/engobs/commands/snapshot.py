@@ -51,9 +51,7 @@ def run_snapshot(cwd: Path, *, profile: str | None, trigger: str, force: bool) -
             "event_type": EventType.BRANCH_SNAPSHOT,
             "trigger": trigger,
             "activity_window": f"{config.heartbeat_seconds}s",
-            "in_progress_activity": (
-                snapshot.dirty_files_count + snapshot.untracked_files_count
-            )
+            "in_progress_activity": (snapshot.dirty_files_count + snapshot.untracked_files_count)
             > 0,
         }
     )

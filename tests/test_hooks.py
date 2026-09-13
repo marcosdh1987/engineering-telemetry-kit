@@ -43,10 +43,7 @@ def test_hook_install_replaces_outdated_managed_block(tmp_path: Path) -> None:
     _init_repo(repo)
     hook = repo / ".git" / "hooks" / "post-commit"
     hook.write_text(
-        "#!/bin/sh\n"
-        "# >>> engobs managed block >>>\n"
-        "legacy\n"
-        "# <<< engobs managed block <<<\n"
+        "#!/bin/sh\n# >>> engobs managed block >>>\nlegacy\n# <<< engobs managed block <<<\n"
     )
 
     install_hook(repo, "post-commit", "commit")

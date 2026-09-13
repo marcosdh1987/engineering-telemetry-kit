@@ -133,7 +133,7 @@ def redact_config(config: ResolvedConfig) -> dict[str, Any]:
 def toml_scalar(value: Any) -> str:
     if isinstance(value, bool):
         return "true" if value else "false"
-    if isinstance(value, (int, float)):
+    if isinstance(value, int | float):
         return str(value)
     escaped = str(value).replace("\\", "\\\\").replace('"', '\\"')
     return f'"{escaped}"'

@@ -80,6 +80,7 @@ Repository
 
 ## Documentation
 
+- `docs/development.md` — contributing, quality gate, and the agent harness (`AGENTS.md`)
 - `docs/privacy.md`
 - `docs/enterprise-deployment.md`
 - `docs/agent-integration.md`

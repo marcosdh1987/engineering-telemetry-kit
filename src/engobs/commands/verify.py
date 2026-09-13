@@ -66,9 +66,7 @@ def run_verify(cwd: Path, *, profile: str | None, command: list[str]) -> int:
     return_code = process.wait()
     duration = time.perf_counter() - start
     event_type = (
-        EventType.VERIFICATION_PASSED
-        if return_code == 0
-        else EventType.VERIFICATION_FAILED
+        EventType.VERIFICATION_PASSED if return_code == 0 else EventType.VERIFICATION_FAILED
     )
     status = "passed" if return_code == 0 else "failed"
     finished_payload = dict(base)

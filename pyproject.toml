@@ -20,7 +20,7 @@ dev = [
   "coverage[toml]>=7.6",
   "mypy>=1.11",
   "pytest>=8.3",
-  "ruff>=0.6",
+  "ruff>=0.16,<0.17",
 ]
 
 [project.scripts]
@@ -46,7 +46,20 @@ line-length = 100
 target-version = "py311"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "B", "UP"]
+# S = bandit-style security rules (see .github/standards.md).
+select = ["E", "F", "I", "B", "UP", "S"]
+
+[tool.ruff.lint.per-file-ignores]
+# assert is the pytest idiom; tests drive git via subprocess with fixed argv.
+"tests/*" = ["S101", "S603", "S607"]
+# subprocess without shell=True, fixed argv, git binary resolved from PATH by design.
+"src/engobs/git/context.py" = ["S603", "S607"]
+# runs the user-supplied verification command (no shell), by design.
+"src/engobs/commands/verify.py" = ["S603"]
+# git hook wrappers must be executable (0o755).
+"src/engobs/git/hooks.py" = ["S103"]
+# urlopen target is the user-configured endpoint; scheme is not attacker-controlled.
+"src/engobs/transport/http.py" = ["S310"]
 
 [tool.mypy]
 python_version = "3.11"

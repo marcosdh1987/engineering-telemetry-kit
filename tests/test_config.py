@@ -10,7 +10,7 @@ def test_profile_and_precedence_resolution(tmp_path: Path, monkeypatch) -> None:
     (repo_root / ".engobs.toml").write_text(
         'profile = "company"\n'
         'project = "repo-project"\n'
-        '[profiles.company]\n'
+        "[profiles.company]\n"
         'organization = "repo-org"\n'
     )
     global_config_path = tmp_path / "config.toml"
